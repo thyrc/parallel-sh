@@ -1,0 +1,92 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  ubuntu:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+        toolchain:
+          - stable
+          - nightly
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+      - name: Display Rust version
+        run: rustc --version --verbose
+      - name: Display Cargo version
+        uses: actions-rs/cargo@v1
+        with:
+          command: version
+          args: --verbose
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target=${{ matrix.target }} --all-features --verbose
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: parallel-sh-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release/parallel-sh
+        if: startsWith(matrix.toolchain, 'stable')
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: test
+          args: --target=${{ matrix.target }} --all-features --verbose
+
+  windows:
+
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - nightly
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: Display Rust version
+        run: rustc --version --verbose
+      - name: Display Cargo version
+        uses: actions-rs/cargo@v1
+        with:
+          command: version
+          args: --verbose
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --all-features --verbose
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: parallel-sh.exe
+          path: target/release/parallel-sh.exe
+        if: startsWith(matrix.toolchain, 'stable')
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: test
+          args: --all-features --verbose
