@@ -1,12 +1,10 @@
 # parallel-sh
 
-[![Build Status](https://travis-ci.com/thyrc/parallel-sh.svg?branch=master)](https://travis-ci.com/thyrc/parallel-sh)
+[![Build Status](https://travis-ci.com/thyrc/parallel-sh.svg?branch=main)](https://travis-ci.com/thyrc/parallel-sh)
 [![CI](https://github.com/thyrc/parallel-sh/workflows/Rust/badge.svg)](https://github.com/thyrc/parallel-sh/actions?query=workflow%3ARust)
-[![GitHub license](https://img.shields.io/github/license/thyrc/parallel-sh.svg)](https://github.com/thyrc/parallel-sh/blob/master/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/thyrc/parallel-sh.svg)](https://github.com/thyrc/parallel-sh/blob/main/LICENSE)
 
-`parallel-sh` was heavily inspired by [parallel](https://crates.io/crates/parallel) parallelzing 'otherwise non-parallel command-line tasks.'
-But instead of recreating the full functionality of `GNU Parallel` `parallel-sh` will only execute (lines of) commands in the platform's
-preferred shell ('sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
+`parallel-sh` was heavily inspired by Rust Parallel [parallel](https://crates.io/crates/parallel) parallelzing 'otherwise non-parallel command-line tasks.' But instead of recreating the full functionality of `GNU Parallel` `parallel-sh` will only execute (lines of) commands in the platform's preferred shell ('sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
 
 - There are no replacement strings (e.g. '{}') or input tokens. Commands will be executed as provided by argument, file or via stdin.
 - Command sources will not be 'linked'. Arguments will be processed by [preference](##Preference):
