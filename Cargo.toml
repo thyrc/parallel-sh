@@ -5,9 +5,11 @@ authors = ["thyrc <thyrc@users.noreply.github.com>"]
 description = "Execute commands in parallel"
 readme = "README.md"
 license = "MIT"
+homepage = "https://crates.io/crates/parallel-sh"
+repository = "https://github.com/thyrc/parallel-sh"
 keywords = ["cli", "parallel", "cpu", "load", "balancer"]
 categories = ["command-line-utilities"]
-exclude = [".github"]
+exclude = [".github", ".travis.yml"]
 
 [badges]
 travis-ci = { repository = "thyrc/parallel-sh" }

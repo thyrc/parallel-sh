@@ -59,7 +59,7 @@ ARGS:
    sleep 2 && echo 2
    ```
 
-3. Pass commadn via stdin:
+3. Pass commands via stdin:
   ```
   echo -e 'sleep 1 && echo 1\nsleep 2 && echo 2' |parallel-sh
   ```
