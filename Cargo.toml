@@ -7,8 +7,8 @@ readme = "README.md"
 license = "MIT"
 homepage = "https://crates.io/crates/parallel-sh"
 repository = "https://github.com/thyrc/parallel-sh"
-keywords = ["cli", "parallel", "cpu", "load", "balancer"]
-categories = ["command-line-utilities"]
+keywords = ["cli", "parallel", "concurrency", "shell"]
+categories = ["command-line-utilities", "concurrency"]
 exclude = [".github", ".travis.yml"]
 
 [badges]
