@@ -5,7 +5,7 @@
 [![CI](https://github.com/thyrc/parallel-sh/workflows/Rust/badge.svg)](https://github.com/thyrc/parallel-sh/actions?query=workflow%3ARust)
 [![GitHub license](https://img.shields.io/github/license/thyrc/parallel-sh.svg)](https://github.com/thyrc/parallel-sh/blob/main/LICENSE)
 
-`parallel-sh` was heavily inspired by Rust Parallel ([parallel](https://crates.io/crates/parallel)) parallelzing 'otherwise non-parallel command-line tasks.' But instead of recreating the full functionality of GNU Parallel `parallel-sh` will only execute (lines of) commands in the platform's preferred shell ('sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
+`parallel-sh` was heavily inspired by Rust Parallel ([parallel](https://crates.io/crates/parallel)) parallelizing 'otherwise non-parallel command-line tasks.' But instead of recreating the full functionality of GNU Parallel `parallel-sh` will only execute (lines of) commands in the platform's preferred shell ('sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
 
 What is not part of `parallel-sh`:
 
@@ -33,7 +33,7 @@ What to expect:
 
 ## Options
 ```
-parallel-sh 0.1.0
+parallel-sh 0.1.1
 Execute commands in parallel
 
 USAGE:

@@ -1,6 +1,6 @@
 [package]
 name = "parallel-sh"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["thyrc <thyrc@users.noreply.github.com>"]
 description = "Execute commands in parallel"
 readme = "README.md"
@@ -30,4 +30,4 @@ default-features = false
 [profile.release]
 panic = "abort"
 lto = true
-debug = true
+debug = false
