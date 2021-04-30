@@ -11,7 +11,7 @@ What is not part of `parallel-sh`:
 
 - There are no replacement strings (e.g. '{}') or input tokens. Commands will be executed as provided by argument, file or via stdin.
 - Command sources will not be 'linked'. Arguments will be processed by [preference](#preference):
-    1. If ARGS are found, `--file` option and stdin is ignored.
+    1. If ARGS are found, `--file` option and stdin are ignored.
     2. If `--file` is provided anything on stdin is ignored.
     3. Only when there are no command arguments and no '--file' option is found, any lines on stdin are treated as commands to
         execute.
@@ -32,7 +32,7 @@ What to expect:
 - The whole crate is tiny, <300 lines of code (w/ ~25% command line argument parsing), and can quickly be modified to meet more complex requirements.
 
 ## Options
-```
+```text
 parallel-sh 0.1.1
 Execute commands in parallel
 
@@ -59,12 +59,12 @@ ARGS:
 ## Preference
 
 1. Pass commands as arguments:
-   ```
+   ```shell
    parallel-sh "sleep 1 && echo 1" "sleep 2 && echo 2"
    ```
 
 2. Pass a file with one command (-line) per line:
-   ```
+   ```shell
    parallel-sh -f /tmp/commands
 
    $ cat /tmp/commands
@@ -73,6 +73,6 @@ ARGS:
    ```
 
 3. Pass commands via stdin:
-   ```
+   ```shell
    echo -e 'sleep 1 && echo 1\nsleep 2 && echo 2' |parallel-sh
    ```

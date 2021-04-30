@@ -1,8 +1,9 @@
 [package]
 name = "parallel-sh"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["thyrc <thyrc@users.noreply.github.com>"]
 description = "Execute commands in parallel"
+edition = "2018"
 readme = "README.md"
 license = "MIT"
 homepage = "https://crates.io/crates/parallel-sh"
@@ -28,6 +29,8 @@ version = "2"
 default-features = false
 
 [profile.release]
+opt-level = "z"
 panic = "abort"
+codegen-units = 1
 lto = true
 debug = false
