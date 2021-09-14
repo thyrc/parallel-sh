@@ -1,7 +1,6 @@
 # parallel-sh
 
 [![Crates.io](https://img.shields.io/crates/v/parallel-sh.svg)](https://crates.io/crates/parallel-sh)
-[![Build Status](https://travis-ci.com/thyrc/parallel-sh.svg?branch=main)](https://travis-ci.com/thyrc/parallel-sh)
 [![CI](https://github.com/thyrc/parallel-sh/workflows/Rust/badge.svg)](https://github.com/thyrc/parallel-sh/actions?query=workflow%3ARust)
 [![GitHub license](https://img.shields.io/github/license/thyrc/parallel-sh.svg)](https://github.com/thyrc/parallel-sh/blob/main/LICENSE)
 
