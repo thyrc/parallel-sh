@@ -1,6 +1,6 @@
 [package]
 name = "parallel-sh"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["thyrc <thyrc@users.noreply.github.com>"]
 description = "Execute commands in parallel"
 edition = "2018"
@@ -10,10 +10,7 @@ homepage = "https://crates.io/crates/parallel-sh"
 repository = "https://github.com/thyrc/parallel-sh"
 keywords = ["cli", "parallel", "concurrency", "shell"]
 categories = ["command-line-utilities", "concurrency"]
-exclude = [".github", ".travis.yml"]
-
-[badges]
-travis-ci = { repository = "thyrc/parallel-sh" }
+exclude = [".github"]
 
 [dependencies]
 log = "0.4"
