@@ -6,7 +6,10 @@ extern crate simplelog;
 use chrono::{DateTime, Duration, Local};
 use clap::{value_t, values_t, App, Arg, ArgMatches};
 use log::{debug, error, info, warn};
-use simplelog::*;
+use simplelog::{
+    ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger,
+    TerminalMode, WriteLogger,
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
@@ -20,10 +23,10 @@ use std::{
 #[derive(Debug)]
 struct JobResult {
     seq: usize,
-    output: Output,
     starttime: DateTime<Local>,
     duration: Duration,
     job: String,
+    output: Output,
 }
 
 // A thread-safe wrapper around a `Receiver`
@@ -90,18 +93,14 @@ fn add_jobs(
     if clijobs.is_empty() {
         if let Some(jobsfile) = jobsfile {
             let file = File::open(&jobsfile)?;
-            for command in BufReader::new(file).lines() {
-                if let Ok(jobline) = command {
-                    start_job(jobline);
-                }
+            for command in BufReader::new(file).lines().flatten() {
+                start_job(command);
             }
         } else {
             let stdin = io::stdin();
             let handle = stdin.lock();
-            for command in BufReader::new(handle).lines() {
-                if let Ok(jobline) = command {
-                    start_job(jobline);
-                }
+            for command in BufReader::new(handle).lines().flatten() {
+                start_job(command);
             }
         }
     } else {
@@ -239,10 +238,7 @@ fn main() {
         }
     }
 
-    let jobsfile = match matches.value_of_os("jobsfile") {
-        Some(path) => Some(PathBuf::from(path)),
-        _ => None,
-    };
+    let jobsfile = matches.value_of_os("jobsfile").map(PathBuf::from);
 
     if let Err(e) = add_jobs(clijobs, jobsfile, tx) {
         error!("Could not start jobs: {}", e);
@@ -258,7 +254,10 @@ fn main() {
                 &result.duration.num_seconds(),
                 &result.duration.num_nanoseconds().unwrap_or(0)
             );
-            if !result.output.status.success() {
+            if result.output.status.success() {
+                print!("{}", String::from_utf8_lossy(&result.output.stdout));
+                eprint!("{}", String::from_utf8_lossy(&result.output.stderr));
+            } else {
                 warn!(
                     "'{}' exited with status code {}",
                     &result.job, &result.output.status
@@ -271,9 +270,6 @@ fn main() {
                 } else {
                     exit = result.output.status.code().unwrap_or(127);
                 }
-            } else {
-                print!("{}", String::from_utf8_lossy(&result.output.stdout));
-                eprint!("{}", String::from_utf8_lossy(&result.output.stderr));
             }
         }
     }
