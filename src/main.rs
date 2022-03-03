@@ -4,7 +4,7 @@ extern crate log;
 extern crate simplelog;
 
 use chrono::{DateTime, Duration, Local};
-use clap::{value_t, values_t, App, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 use log::{debug, error, info, warn};
 use simplelog::{
     ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger,
@@ -14,12 +14,13 @@ use std::{
     fs::File,
     io::{self, BufRead, BufReader},
     path::PathBuf,
-    process::{Command, Output},
+    process::Output,
     sync::mpsc::{channel, Receiver, Sender},
     sync::{Arc, Mutex},
     thread,
 };
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct JobResult {
     seq: usize,
@@ -75,11 +76,15 @@ fn create_logger(opts: &ArgMatches) -> Result<(), std::io::Error> {
             File::create(file)?,
         ));
     }
-    CombinedLogger::init(loggers).unwrap();
+
+    if CombinedLogger::init(loggers).is_err() {
+        error!("Could not initialize logger.");
+    };
 
     Ok(())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn add_jobs(
     clijobs: Vec<String>,
     jobsfile: Option<PathBuf>,
@@ -88,7 +93,7 @@ fn add_jobs(
     let start_job = |job| {
         debug!("Starting job '{}'", &job);
         tx.send(job)
-            .unwrap_or_else(|e| error!("Could no add job: {}", e));
+            .unwrap_or_else(|e| error!("Could not add job: {}", e));
     };
     if clijobs.is_empty() {
         if let Some(jobsfile) = jobsfile {
@@ -112,10 +117,10 @@ fn add_jobs(
 }
 
 fn run(dry_run: bool, command: &str) -> Output {
-    let mut shell = Command::new("sh");
+    let mut shell = std::process::Command::new("sh");
 
     if cfg!(target_os = "windows") {
-        shell = Command::new("powershell");
+        shell = std::process::Command::new("powershell");
     }
 
     if dry_run {
@@ -129,10 +134,11 @@ fn run(dry_run: bool, command: &str) -> Output {
         .expect("Failed to execute command")
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn start_workers(
     threads: usize,
     dry_run: bool,
-    jobs: SharedReceiver<String>,
+    jobs: &SharedReceiver<String>,
     results: Sender<JobResult>,
 ) {
     debug!("Starting {} worker threads", threads);
@@ -158,60 +164,61 @@ fn start_workers(
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn main() {
-    let matches = App::new(env!("CARGO_PKG_NAME"))
+    let matches = Command::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
-            Arg::with_name("quiet")
-                .short("q")
+            Arg::new("quiet")
+                .short('q')
                 .long("quiet")
                 .conflicts_with("v")
                 .help(format!("Do not print `{}` warnings", env!("CARGO_PKG_NAME")).as_ref()),
         )
         .arg(
-            Arg::with_name("dry_run")
+            Arg::new("dry_run")
                 .long("dry-run")
                 .help("Perform a trial run, only print what would be done (with -vv)"),
         )
         .arg(
-            Arg::with_name("v")
+            Arg::new("v")
                 .long("verbose")
-                .short("v")
-                .multiple(true)
+                .short('v')
+                .multiple_occurrences(true)
                 .conflicts_with("quiet")
                 .help("Sets the level of verbosity"),
         )
         .arg(
-            Arg::with_name("log")
+            Arg::new("log")
                 .long("log")
-                .short("l")
+                .short('l')
                 .value_name("FILE")
                 .takes_value(true)
                 .help("Log output to file"),
         )
         .arg(
-            Arg::with_name("halt")
+            Arg::new("halt")
                 .long("halt-on-error")
                 .help("Stop execution if an error occurs in any thread"),
         )
         .arg(
-            Arg::with_name("threads")
+            Arg::new("threads")
                 .long("jobs")
-                .short("j")
+                .short('j')
                 .value_name("THREADS")
                 .takes_value(true)
                 .help("Number of parallel executions"),
         )
         .arg(
-            Arg::with_name("jobsfile")
+            Arg::new("jobsfile")
                 .long("file")
-                .short("f")
+                .short('f')
                 .takes_value(true)
                 .value_name("FILE")
                 .help("Read commands from file (one command per line)"),
         )
-        .arg(Arg::with_name("clijobs").multiple(true))
+        .arg(Arg::new("clijobs").multiple_occurrences(true))
         .get_matches();
 
     if let Err(e) = create_logger(&matches) {
@@ -225,15 +232,17 @@ fn main() {
     let (rtx, rrx) = channel();
 
     start_workers(
-        value_t!(matches, "threads", usize).unwrap_or_else(|_| num_cpus::get()),
+        matches
+            .value_of_t("threads")
+            .unwrap_or_else(|_| num_cpus::get()),
         matches.is_present("dry_run"),
-        rx,
+        &rx,
         rtx,
     );
 
     let mut clijobs = vec![];
     if matches.is_present("clijobs") {
-        for v in values_t!(matches, "clijobs", String).unwrap() {
+        for v in matches.values_of_t("clijobs").unwrap_or_else(|e| e.exit()) {
             clijobs.push(v);
         }
     }
