@@ -1,6 +1,6 @@
 [package]
 name = "parallel-sh"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["thyrc <thyrc@users.noreply.github.com>"]
 description = "Execute commands in parallel"
 edition = "2021"
@@ -15,11 +15,10 @@ exclude = [".github"]
 [dependencies]
 log = "0.4"
 num_cpus = "1"
-simplelog = "0.11"
+simplelog = "0.12"
 
-[dependencies.chrono]
-version = "0.4"
-default-features = false
+[dependencies.time]
+version = "0.3"
 
 [dependencies.clap]
 version = "3"

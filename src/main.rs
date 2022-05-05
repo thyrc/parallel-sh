@@ -1,9 +1,8 @@
-extern crate chrono;
 extern crate clap;
 extern crate log;
 extern crate simplelog;
+extern crate time;
 
-use chrono::{DateTime, Duration, Local};
 use clap::{Arg, ArgMatches, Command};
 use log::{debug, error, info, warn};
 use simplelog::{
@@ -19,12 +18,13 @@ use std::{
     sync::{Arc, Mutex},
     thread,
 };
+use time::{Duration, Instant};
 
 #[allow(dead_code)]
 #[derive(Debug)]
 struct JobResult {
     seq: usize,
-    starttime: DateTime<Local>,
+    starttime: Instant,
     duration: Duration,
     job: String,
     output: Output,
@@ -58,8 +58,9 @@ fn create_logger(opts: &ArgMatches) -> Result<(), std::io::Error> {
     };
 
     let logconfig = ConfigBuilder::new()
-        .set_time_format("[%FT%T%:z]".to_string())
-        .set_time_to_local(true)
+        .set_time_format_rfc3339()
+        .set_time_offset_to_local()
+        .unwrap_or_else(|v| v)
         .build();
 
     let mut loggers: Vec<Box<dyn SharedLogger>> = vec![TermLogger::new(
@@ -147,9 +148,9 @@ fn start_workers(
         let results = results.clone();
         thread::spawn(move || {
             for job in jobs {
-                let starttime = Local::now();
+                let starttime = Instant::now();
                 let output = run(dry_run, &job);
-                let duration = Local::now().signed_duration_since(starttime);
+                let duration = starttime.elapsed();
                 results
                     .send(JobResult {
                         seq,
@@ -260,8 +261,8 @@ fn main() {
             info!(
                 "'{}' took {}.{}s",
                 &result.job,
-                &result.duration.num_seconds(),
-                &result.duration.num_nanoseconds().unwrap_or(0)
+                &result.duration.whole_seconds(),
+                &result.duration.whole_nanoseconds()
             );
             if result.output.status.success() {
                 print!("{}", String::from_utf8_lossy(&result.output.stdout));
