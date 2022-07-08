@@ -3,7 +3,7 @@ extern crate log;
 extern crate simplelog;
 extern crate time;
 
-use clap::{Arg, ArgMatches, Command};
+use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 use log::{debug, error, info, warn};
 use simplelog::{
     ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger,
@@ -216,6 +216,7 @@ fn main() {
                 .long("file")
                 .short('f')
                 .takes_value(true)
+                .value_parser(ValueParser::os_string())
                 .value_name("FILE")
                 .help("Read commands from file (one command per line)"),
         )
