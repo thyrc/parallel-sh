@@ -1,6 +1,6 @@
 [package]
 name = "parallel-sh"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["thyrc <thyrc@users.noreply.github.com>"]
 description = "Execute commands in parallel"
 edition = "2021"
@@ -23,7 +23,7 @@ version = "0.3"
 [dependencies.clap]
 version = "3"
 default-features = false
-features = ["std"]
+features = ["std", "deprecated"]
 
 [profile.release]
 opt-level = "z"
