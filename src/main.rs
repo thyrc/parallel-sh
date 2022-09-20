@@ -1,15 +1,13 @@
-extern crate clap;
-extern crate log;
-extern crate simplelog;
-extern crate time;
-
-use clap::{builder::ValueParser, Arg, ArgMatches, Command};
+use clap::{
+    builder::RangedU64ValueParser, builder::ValueParser, Arg, ArgAction, ArgMatches, Command,
+};
 use log::{debug, error, info, warn};
 use simplelog::{
     ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
 };
 use std::{
+    ffi::OsString,
     fs::File,
     io::{self, BufRead, BufReader},
     path::PathBuf,
@@ -49,7 +47,7 @@ fn shared_channel<T>() -> (Sender<T>, SharedReceiver<T>) {
 }
 
 fn create_logger(opts: &ArgMatches) -> Result<(), std::io::Error> {
-    let level = match (opts.is_present("quiet"), opts.occurrences_of("v")) {
+    let level = match (opts.contains_id("quiet"), opts.get_count("v")) {
         (true, _) => LevelFilter::Error,
         (_, 0) => LevelFilter::Warn,
         (_, 1) => LevelFilter::Info,
@@ -70,7 +68,7 @@ fn create_logger(opts: &ArgMatches) -> Result<(), std::io::Error> {
         ColorChoice::Auto,
     )];
 
-    if let Some(file) = opts.value_of("log") {
+    if let Some(file) = opts.get_one::<OsString>("log").map(PathBuf::from) {
         loggers.push(WriteLogger::new(
             LevelFilter::Info,
             logconfig,
@@ -186,7 +184,7 @@ fn main() {
             Arg::new("v")
                 .long("verbose")
                 .short('v')
-                .multiple_occurrences(true)
+                .action(ArgAction::Count)
                 .conflicts_with("quiet")
                 .help("Sets the level of verbosity"),
         )
@@ -195,6 +193,7 @@ fn main() {
                 .long("log")
                 .short('l')
                 .value_name("FILE")
+                .value_parser(ValueParser::os_string())
                 .takes_value(true)
                 .help("Log output to file"),
         )
@@ -208,6 +207,7 @@ fn main() {
                 .long("jobs")
                 .short('j')
                 .value_name("THREADS")
+                .value_parser(RangedU64ValueParser::<usize>::new().range(1..=4096))
                 .takes_value(true)
                 .help("Number of parallel executions"),
         )
@@ -215,12 +215,16 @@ fn main() {
             Arg::new("jobsfile")
                 .long("file")
                 .short('f')
-                .takes_value(true)
-                .value_parser(ValueParser::os_string())
                 .value_name("FILE")
+                .value_parser(ValueParser::os_string())
+                .takes_value(true)
                 .help("Read commands from file (one command per line)"),
         )
-        .arg(Arg::new("clijobs").multiple_occurrences(true))
+        .arg(
+            Arg::new("clijobs")
+                .multiple_values(true)
+                .action(ArgAction::Append),
+        )
         .get_matches();
 
     if let Err(e) = create_logger(&matches) {
@@ -234,22 +238,22 @@ fn main() {
     let (rtx, rrx) = channel();
 
     start_workers(
-        matches
-            .value_of_t("threads")
-            .unwrap_or_else(|_| num_cpus::get()),
-        matches.is_present("dry_run"),
+        *matches.get_one("threads").unwrap_or(&num_cpus::get()),
+        matches.contains_id("dry_run"),
         &rx,
         rtx,
     );
 
     let mut clijobs = vec![];
-    if matches.is_present("clijobs") {
-        for v in matches.values_of_t("clijobs").unwrap_or_else(|e| e.exit()) {
-            clijobs.push(v);
-        }
+    if matches.contains_id("clijobs") {
+        clijobs = matches
+            .get_many::<String>("clijobs")
+            .unwrap_or_default()
+            .cloned()
+            .collect::<Vec<_>>();
     }
 
-    let jobsfile = matches.value_of_os("jobsfile").map(PathBuf::from);
+    let jobsfile = matches.get_one::<OsString>("jobsfile").map(PathBuf::from);
 
     if let Err(e) = add_jobs(clijobs, jobsfile, tx) {
         error!("Could not start jobs: {}", e);
@@ -258,7 +262,7 @@ fn main() {
 
     let mut exit = 0;
     for result in rrx {
-        if !matches.is_present("dry_run") {
+        if !matches.contains_id("dry_run") {
             info!(
                 "'{}' took {}.{}s",
                 &result.job,
@@ -276,7 +280,7 @@ fn main() {
                 print!("{}", String::from_utf8_lossy(&result.output.stdout));
                 eprint!("{}", String::from_utf8_lossy(&result.output.stderr));
 
-                if matches.is_present("halt") {
+                if matches.contains_id("halt") {
                     std::process::exit(1);
                 } else {
                     exit = result.output.status.code().unwrap_or(127);
