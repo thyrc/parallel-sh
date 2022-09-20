@@ -1,5 +1,6 @@
 use clap::{
-    builder::RangedU64ValueParser, builder::ValueParser, Arg, ArgAction, ArgMatches, Command,
+    builder::{RangedU64ValueParser, ValueParser},
+    Arg, ArgAction, ArgMatches, Command,
 };
 use log::{debug, error, info, warn};
 use simplelog::{
@@ -8,7 +9,7 @@ use simplelog::{
 };
 use std::{
     ffi::OsString,
-    fs::File,
+    fs::{File, OpenOptions},
     io::{self, BufRead, BufReader},
     path::PathBuf,
     process::Output,
@@ -70,9 +71,9 @@ fn create_logger(opts: &ArgMatches) -> Result<(), std::io::Error> {
 
     if let Some(file) = opts.get_one::<OsString>("log").map(PathBuf::from) {
         loggers.push(WriteLogger::new(
-            LevelFilter::Info,
+            level,
             logconfig,
-            File::create(file)?,
+            OpenOptions::new().append(true).create(true).open(file)?,
         ));
     }
 
