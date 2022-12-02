@@ -19,11 +19,8 @@ use std::{
 };
 use time::{Duration, Instant};
 
-#[allow(dead_code)]
 #[derive(Debug)]
 struct JobResult {
-    seq: usize,
-    starttime: Instant,
     duration: Duration,
     job: String,
     output: Output,
@@ -98,15 +95,11 @@ fn add_jobs(
     if clijobs.is_empty() {
         if let Some(jobsfile) = jobsfile {
             let file = File::open(&jobsfile)?;
-            for command in BufReader::new(file).lines().flatten() {
-                start_job(command);
-            }
+            BufReader::new(file).lines().flatten().for_each(start_job);
         } else {
             let stdin = io::stdin();
             let handle = stdin.lock();
-            for command in BufReader::new(handle).lines().flatten() {
-                start_job(command);
-            }
+            BufReader::new(handle).lines().flatten().for_each(start_job);
         }
     } else {
         // preferred
@@ -142,7 +135,7 @@ fn start_workers(
     results: Sender<JobResult>,
 ) {
     debug!("Starting {} worker threads", threads);
-    for seq in 0..threads {
+    for _seq in 0..threads {
         let jobs = jobs.clone();
         let results = results.clone();
         thread::spawn(move || {
@@ -152,8 +145,6 @@ fn start_workers(
                 let duration = starttime.elapsed();
                 results
                     .send(JobResult {
-                        seq,
-                        starttime,
                         duration,
                         job,
                         output,
