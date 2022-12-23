@@ -94,7 +94,7 @@ fn add_jobs(
     };
     if clijobs.is_empty() {
         if let Some(jobsfile) = jobsfile {
-            let file = File::open(&jobsfile)?;
+            let file = File::open(jobsfile)?;
             BufReader::new(file).lines().flatten().for_each(start_job);
         } else {
             let stdin = io::stdin();
