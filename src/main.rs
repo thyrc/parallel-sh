@@ -165,7 +165,10 @@ fn main() {
                 .short('q')
                 .long("quiet")
                 .conflicts_with("v")
-                .help(format!("Do not print `{}` warnings", env!("CARGO_PKG_NAME")).as_ref()),
+                .help(format!(
+                    "Do not print `{}` warnings",
+                    env!("CARGO_PKG_NAME")
+                )),
         )
         .arg(
             Arg::new("dry_run")
@@ -186,7 +189,7 @@ fn main() {
                 .short('l')
                 .value_name("FILE")
                 .value_parser(ValueParser::os_string())
-                .takes_value(true)
+                .num_args(1)
                 .help("Log output to file"),
         )
         .arg(
@@ -200,7 +203,7 @@ fn main() {
                 .short('j')
                 .value_name("THREADS")
                 .value_parser(RangedU64ValueParser::<usize>::new().range(1..=4096))
-                .takes_value(true)
+                .num_args(1)
                 .help("Number of parallel executions"),
         )
         .arg(
@@ -209,14 +212,10 @@ fn main() {
                 .short('f')
                 .value_name("FILE")
                 .value_parser(ValueParser::os_string())
-                .takes_value(true)
+                .num_args(1)
                 .help("Read commands from file (one command per line)"),
         )
-        .arg(
-            Arg::new("clijobs")
-                .multiple_values(true)
-                .action(ArgAction::Append),
-        )
+        .arg(Arg::new("clijobs").action(ArgAction::Append))
         .get_matches();
 
     if let Err(e) = create_logger(&matches) {

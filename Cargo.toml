@@ -21,9 +21,9 @@ simplelog = "0.12"
 version = "0.3"
 
 [dependencies.clap]
-version = "3"
+version = "4"
 default-features = false
-features = ["std", "deprecated"]
+features = ["std", "help", "deprecated"]
 
 [profile.release]
 opt-level = "z"
