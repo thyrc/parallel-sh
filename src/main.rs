@@ -45,7 +45,7 @@ fn shared_channel<T>() -> (Sender<T>, SharedReceiver<T>) {
 }
 
 fn create_logger(opts: &ArgMatches) -> Result<(), std::io::Error> {
-    let level = match (opts.contains_id("quiet"), opts.get_count("v")) {
+    let level = match (opts.get_flag("quiet"), opts.get_count("verbose")) {
         (true, _) => LevelFilter::Error,
         (_, 0) => LevelFilter::Warn,
         (_, 1) => LevelFilter::Info,
@@ -160,23 +160,27 @@ fn main() {
     let matches = Command::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
+        .override_usage(format!("{} [OPTIONS] [clijobs]...", env!("CARGO_BIN_NAME")))
         .arg(
             Arg::new("quiet")
                 .short('q')
                 .long("quiet")
-                .conflicts_with("v")
+                .conflicts_with("verbose")
+                .action(ArgAction::SetTrue)
                 .help(format!(
                     "Do not print `{}` warnings",
-                    env!("CARGO_PKG_NAME")
+                    env!("CARGO_BIN_NAME")
                 )),
         )
         .arg(
             Arg::new("dry_run")
+                .short('n')
                 .long("dry-run")
+                .action(ArgAction::SetTrue)
                 .help("Perform a trial run, only print what would be done (with -vv)"),
         )
         .arg(
-            Arg::new("v")
+            Arg::new("verbose")
                 .long("verbose")
                 .short('v')
                 .action(ArgAction::Count)
@@ -195,6 +199,7 @@ fn main() {
         .arg(
             Arg::new("halt")
                 .long("halt-on-error")
+                .action(ArgAction::SetTrue)
                 .help("Stop execution if an error occurs in any thread"),
         )
         .arg(
@@ -230,7 +235,7 @@ fn main() {
 
     start_workers(
         *matches.get_one("threads").unwrap_or(&num_cpus::get()),
-        matches.contains_id("dry_run"),
+        matches.get_flag("dry_run"),
         &rx,
         rtx,
     );
@@ -253,7 +258,7 @@ fn main() {
 
     let mut exit = 0;
     for result in rrx {
-        if !matches.contains_id("dry_run") {
+        if !matches.get_flag("dry_run") {
             info!(
                 "'{}' took {}.{}s",
                 &result.job,
@@ -271,7 +276,7 @@ fn main() {
                 print!("{}", String::from_utf8_lossy(&result.output.stdout));
                 eprint!("{}", String::from_utf8_lossy(&result.output.stderr));
 
-                if matches.contains_id("halt") {
+                if matches.get_flag("halt") {
                     std::process::exit(1);
                 } else {
                     exit = result.output.status.code().unwrap_or(127);
