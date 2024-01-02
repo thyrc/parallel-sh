@@ -29,7 +29,7 @@ Most of the effects of these features can be achieved by processing the commands
 
 ## Options
 ```text
-parallel-sh 0.1.1
+parallel-sh 0.1.13
 Execute commands in parallel
 
 USAGE:
