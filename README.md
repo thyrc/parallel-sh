@@ -4,7 +4,7 @@
 [![CI](https://github.com/thyrc/parallel-sh/workflows/Rust/badge.svg)](https://github.com/thyrc/parallel-sh/actions?query=workflow%3ARust)
 [![GitHub license](https://img.shields.io/github/license/thyrc/parallel-sh.svg)](https://github.com/thyrc/parallel-sh/blob/main/LICENSE)
 
-`parallel-sh` was heavily inspired by Rust Parallel ([parallel](https://crates.io/crates/parallel)) parallelizing 'otherwise non-parallel command-line tasks.' But instead of trying to recreate the full functionality of GNU Parallel `parallel-sh` will simply execute (lines of) commands in the platform's preferred shell ('sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
+`parallel-sh` was heavily inspired by Rust Parallel ([parallel](https://crates.io/crates/parallel)) parallelizing 'otherwise non-parallel command-line tasks.' But instead of trying to recreate the full functionality of GNU Parallel `parallel-sh` will simply execute (lines of) commands in the platform's preferred shell (by default 'sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
 
 What to expect:
 
@@ -47,6 +47,7 @@ OPTIONS:
     -f, --file <FILE>       Read commands from file (one command per line)
     -l, --log <FILE>        Log output to file
     -j, --jobs <THREADS>    Number of parallel executions
+    -s, --shell <SHELL>     shell to use for command execution (defaults to powershell on windows, and sh everywhere else)
 
 ARGS:
     <clijobs>...
