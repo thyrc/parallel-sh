@@ -109,12 +109,19 @@ fn add_jobs(
     Ok(())
 }
 
-fn run(dry_run: bool, command: &str) -> Output {
-    let mut shell = std::process::Command::new("sh");
+fn run(dry_run: bool, command: &str, shell: Option<&OsString>) -> Output {
+    let shell_to_use = match shell {
+      Some(v) => OsString::from(v),
+      None => {
+        if cfg!(target_os = "windows") {
+          OsString::from("powershell")
+        } else {
+          OsString::from("sh")
+        }
+      }
+    };
 
-    if cfg!(target_os = "windows") {
-        shell = std::process::Command::new("powershell");
-    }
+    let mut shell = std::process::Command::new(shell_to_use);
 
     if dry_run {
         return shell.output().expect("Failed to run shell");
@@ -133,15 +140,17 @@ fn start_workers(
     dry_run: bool,
     jobs: &SharedReceiver<String>,
     results: Sender<JobResult>,
+    shell: Option<OsString>,
 ) {
     debug!("Starting {} worker threads", threads);
     for _seq in 0..threads {
         let jobs = jobs.clone();
         let results = results.clone();
+        let shell = shell.clone();
         thread::spawn(move || {
             for job in jobs {
                 let starttime = Instant::now();
-                let output = run(dry_run, &job);
+                let output = run(dry_run, &job, shell.as_ref());
                 let duration = starttime.elapsed();
                 results
                     .send(JobResult {
@@ -212,6 +221,15 @@ fn main() {
                 .help("Number of parallel executions"),
         )
         .arg(
+            Arg::new("shell")
+                .long("shell")
+                .short('s')
+                .value_name("SHELL")
+                .value_parser(ValueParser::os_string())
+                .num_args(1)
+                .help("shell to use for command execution (defaults to powershell on windows, and sh everywhere else)"),
+        )
+        .arg(
             Arg::new("jobsfile")
                 .long("file")
                 .short('f')
@@ -238,6 +256,7 @@ fn main() {
         matches.get_flag("dry_run"),
         &rx,
         rtx,
+        matches.get_one::<OsString>("shell").cloned(),
     );
 
     let mut clijobs = vec![];
