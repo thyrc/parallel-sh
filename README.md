@@ -10,7 +10,7 @@ What to expect:
 
 - Output (stdout and stderr) of each child process is stored and printed only after the child exits.
 - There is some simple logging and some runtime metric (via -v, -vv or -vvv) available.
-- The whole crate is tiny, <300 lines of code (w/ ~25% command line argument parsing), and can quickly be modified to meet more complex requirements.
+- The whole crate is tiny, <350 lines of code (w/ ~25% command line argument parsing), and can quickly be modified to meet more complex requirements.
 
 What is not part of `parallel-sh`:
 
@@ -48,7 +48,8 @@ OPTIONS:
     -l, --log <FILE>        Log output to file
     -j, --jobs <THREADS>    Number of parallel executions
     -s, --shell <SHELL>     shell to use for command execution (defaults to powershell on windows, and sh everywhere else)
-
+                            Note: commands are executed via <SHELL> -c "command", therefore the provided shell must
+                            support the '-c' option.
 ARGS:
     <clijobs>...
 ```

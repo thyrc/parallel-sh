@@ -166,6 +166,12 @@ fn start_workers(
 
 #[allow(clippy::too_many_lines)]
 fn main() {
+    let shell_help = if cfg!(target_os = "windows") {
+        "shell to use for command execution. Must support '-c' (defaults to powershell)"
+    } else {
+        "shell to use for command execution. Must support '-c' (defaults to sh)"
+    };
+
     let matches = Command::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -227,7 +233,7 @@ fn main() {
                 .value_name("SHELL")
                 .value_parser(ValueParser::os_string())
                 .num_args(1)
-                .help("shell to use for command execution (defaults to powershell on windows, and sh everywhere else)"),
+                .help(shell_help),
         )
         .arg(
             Arg::new("jobsfile")
