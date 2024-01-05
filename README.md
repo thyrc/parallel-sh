@@ -4,13 +4,13 @@
 [![CI](https://github.com/thyrc/parallel-sh/workflows/Rust/badge.svg)](https://github.com/thyrc/parallel-sh/actions?query=workflow%3ARust)
 [![GitHub license](https://img.shields.io/github/license/thyrc/parallel-sh.svg)](https://github.com/thyrc/parallel-sh/blob/main/LICENSE)
 
-`parallel-sh` was heavily inspired by Rust Parallel ([parallel](https://crates.io/crates/parallel)) parallelizing 'otherwise non-parallel command-line tasks.' But instead of trying to recreate the full functionality of GNU Parallel `parallel-sh` will simply execute (lines of) commands in the platform's preferred shell ('sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
+`parallel-sh` was heavily inspired by Rust Parallel ([parallel](https://crates.io/crates/parallel)) parallelizing 'otherwise non-parallel command-line tasks.' But instead of trying to recreate the full functionality of GNU Parallel `parallel-sh` will simply execute (lines of) commands in the platform's preferred shell (by default 'sh -c' on Unix systems, and 'powershell.exe -c' on Windows) in separate threads.
 
 What to expect:
 
 - Output (stdout and stderr) of each child process is stored and printed only after the child exits.
 - There is some simple logging and some runtime metric (via -v, -vv or -vvv) available.
-- The whole crate is tiny, <300 lines of code (w/ ~25% command line argument parsing), and can quickly be modified to meet more complex requirements.
+- The whole crate is tiny, <350 lines of code (w/ ~25% command line argument parsing), and can quickly be modified to meet more complex requirements.
 
 What is not part of `parallel-sh`:
 
@@ -29,7 +29,7 @@ Most of the effects of these features can be achieved by processing the commands
 
 ## Options
 ```text
-parallel-sh 0.1.1
+parallel-sh 0.1.13
 Execute commands in parallel
 
 USAGE:
@@ -47,7 +47,9 @@ OPTIONS:
     -f, --file <FILE>       Read commands from file (one command per line)
     -l, --log <FILE>        Log output to file
     -j, --jobs <THREADS>    Number of parallel executions
-
+    -s, --shell <SHELL>     shell to use for command execution (defaults to powershell on windows, and sh everywhere else)
+                            Note: commands are executed via <SHELL> -c "command", therefore the provided shell must
+                            support the '-c' option.
 ARGS:
     <clijobs>...
 ```
