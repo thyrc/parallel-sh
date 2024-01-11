@@ -11,8 +11,9 @@ use std::{
     ffi::OsString,
     fs::{File, OpenOptions},
     io::{self, BufRead, BufReader},
+    os::unix::process::ExitStatusExt,
     path::PathBuf,
-    process::Output,
+    process::{ExitStatus, Output},
     sync::mpsc::{channel, Receiver, Sender},
     sync::{Arc, Mutex},
     thread,
@@ -109,18 +110,47 @@ fn add_jobs(
     Ok(())
 }
 
-fn run(dry_run: bool, command: &str, shell: &OsString) -> Output {
-    let mut shell = std::process::Command::new(shell);
+fn run(dry_run: bool, command: &str, shell: &Option<OsString>) -> Output {
+    if let Some(s) = shell {
+        let mut shell = std::process::Command::new(s);
 
-    if dry_run {
-        return shell.output().expect("Failed to run shell");
-    };
+        if dry_run {
+            return Output {
+                status: ExitStatus::default(),
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+            };
+        };
 
-    shell
-        .arg("-c")
-        .arg(command)
-        .output()
-        .expect("Failed to execute command")
+        match shell.arg("-c").arg(command).output() {
+            Ok(s) => s,
+            Err(_) => Output {
+                status: ExitStatus::from_raw(1),
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+            },
+        }
+    } else {
+        let cmd: Vec<_> = command.split(' ').collect();
+        let mut command = std::process::Command::new(cmd[0]);
+
+        if dry_run {
+            return Output {
+                status: ExitStatus::default(),
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+            };
+        };
+
+        match command.args(&cmd[1..]).output() {
+            Ok(c) => c,
+            Err(_) => Output {
+                status: ExitStatus::from_raw(1),
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+            },
+        }
+    }
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -129,8 +159,11 @@ fn start_workers(
     dry_run: bool,
     jobs: &SharedReceiver<String>,
     results: Sender<JobResult>,
-    shell: &OsString,
+    shell: &Option<OsString>,
 ) {
+    if dry_run {
+        debug!("Perform a trial run with no changes made");
+    }
     debug!("Starting {} worker threads", threads);
     for _seq in 0..threads {
         let jobs = jobs.clone();
@@ -155,7 +188,7 @@ fn start_workers(
 
 #[allow(clippy::too_many_lines)]
 fn main() {
-    let mut shell = if cfg!(target_os = "windows") {
+    let shell = if cfg!(target_os = "windows") {
         OsString::from("powershell")
     } else {
         OsString::from("sh")
@@ -228,6 +261,12 @@ fn main() {
                 )),
         )
         .arg(
+            Arg::new("noshell")
+                .long("no-shell")
+                .action(ArgAction::SetTrue)
+                .help("TODO"),
+        )
+        .arg(
             Arg::new("jobsfile")
                 .long("file")
                 .short('f')
@@ -249,9 +288,16 @@ fn main() {
     // return channel
     let (rtx, rrx) = channel();
 
+    let mut shell = Some(shell);
     if let Some(v) = matches.get_one::<OsString>("shell") {
-        shell = v.clone();
+        debug!("Using shell: '{}'", v.to_string_lossy());
+        shell = Some(v.clone());
     };
+
+    if matches.get_flag("noshell") {
+        debug!("Running command without shell");
+        shell = None;
+    }
 
     start_workers(
         *matches.get_one("threads").unwrap_or(&num_cpus::get()),
