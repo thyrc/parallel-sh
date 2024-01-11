@@ -7,11 +7,14 @@ use simplelog::{
     ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
 };
+#[cfg(not(target_os = "windows"))]
+use std::os::unix::process::ExitStatusExt;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::ExitStatusExt;
 use std::{
     ffi::OsString,
     fs::{File, OpenOptions},
     io::{self, BufRead, BufReader},
-    os::unix::process::ExitStatusExt,
     path::PathBuf,
     process::{ExitStatus, Output},
     sync::mpsc::{channel, Receiver, Sender},
