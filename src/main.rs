@@ -109,19 +109,8 @@ fn add_jobs(
     Ok(())
 }
 
-fn run(dry_run: bool, command: &str, shell: Option<&OsString>) -> Output {
-    let shell_to_use = match shell {
-      Some(v) => OsString::from(v),
-      None => {
-        if cfg!(target_os = "windows") {
-          OsString::from("powershell")
-        } else {
-          OsString::from("sh")
-        }
-      }
-    };
-
-    let mut shell = std::process::Command::new(shell_to_use);
+fn run(dry_run: bool, command: &str, shell: &OsString) -> Output {
+    let mut shell = std::process::Command::new(shell);
 
     if dry_run {
         return shell.output().expect("Failed to run shell");
@@ -140,7 +129,7 @@ fn start_workers(
     dry_run: bool,
     jobs: &SharedReceiver<String>,
     results: Sender<JobResult>,
-    shell: Option<OsString>,
+    shell: &OsString,
 ) {
     debug!("Starting {} worker threads", threads);
     for _seq in 0..threads {
@@ -150,7 +139,7 @@ fn start_workers(
         thread::spawn(move || {
             for job in jobs {
                 let starttime = Instant::now();
-                let output = run(dry_run, &job, shell.as_ref());
+                let output = run(dry_run, &job, &shell);
                 let duration = starttime.elapsed();
                 results
                     .send(JobResult {
@@ -166,10 +155,10 @@ fn start_workers(
 
 #[allow(clippy::too_many_lines)]
 fn main() {
-    let shell_help = if cfg!(target_os = "windows") {
-        "shell to use for command execution. Must support '-c' (defaults to powershell)"
+    let mut shell = if cfg!(target_os = "windows") {
+        OsString::from("powershell")
     } else {
-        "shell to use for command execution. Must support '-c' (defaults to sh)"
+        OsString::from("sh")
     };
 
     let matches = Command::new(env!("CARGO_PKG_NAME"))
@@ -233,7 +222,10 @@ fn main() {
                 .value_name("SHELL")
                 .value_parser(ValueParser::os_string())
                 .num_args(1)
-                .help(shell_help),
+                .help(format!(
+                    "shell to use for command execution. Must support '-c' (defaults to {})",
+                    shell.to_string_lossy()
+                )),
         )
         .arg(
             Arg::new("jobsfile")
@@ -257,12 +249,16 @@ fn main() {
     // return channel
     let (rtx, rrx) = channel();
 
+    if let Some(v) = matches.get_one::<OsString>("shell") {
+        shell = v.clone();
+    };
+
     start_workers(
         *matches.get_one("threads").unwrap_or(&num_cpus::get()),
         matches.get_flag("dry_run"),
         &rx,
         rtx,
-        matches.get_one::<OsString>("shell").cloned(),
+        &shell,
     );
 
     let mut clijobs = vec![];
@@ -294,10 +290,7 @@ fn main() {
                 print!("{}", String::from_utf8_lossy(&result.output.stdout));
                 eprint!("{}", String::from_utf8_lossy(&result.output.stderr));
             } else {
-                warn!(
-                    "'{}' exited with status code {}",
-                    &result.job, &result.output.status
-                );
+                warn!("'{}' {}", &result.job, &result.output.status);
                 print!("{}", String::from_utf8_lossy(&result.output.stdout));
                 eprint!("{}", String::from_utf8_lossy(&result.output.stderr));
 
