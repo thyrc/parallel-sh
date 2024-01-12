@@ -259,7 +259,7 @@ fn main() {
                 .value_parser(ValueParser::os_string())
                 .num_args(1)
                 .help(format!(
-                    "shell to use for command execution. Must support '-c' (defaults to {})",
+                    "Shell to use for command execution. Must support '-c' (defaults to {})",
                     shell.to_string_lossy()
                 )),
         )
@@ -267,7 +267,7 @@ fn main() {
             Arg::new("noshell")
                 .long("no-shell")
                 .action(ArgAction::SetTrue)
-                .help("TODO"),
+                .help("Do not pass commands through a shell, but execute them directly "),
         )
         .arg(
             Arg::new("jobsfile")

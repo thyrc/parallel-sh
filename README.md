@@ -10,7 +10,7 @@ What to expect:
 
 - Output (stdout and stderr) of each child process is stored and printed only after the child exits.
 - There is some simple logging and some runtime metric (via -v, -vv or -vvv) available.
-- The whole crate is tiny, <350 lines of code (w/ ~25% command line argument parsing), and can quickly be modified to meet more complex requirements.
+- The whole crate is tiny, <400 lines of code (a lot of it command line argument parsing), and can quickly be modified to meet more complex requirements.
 
 What is not part of `parallel-sh`:
 
@@ -20,39 +20,41 @@ What is not part of `parallel-sh`:
     2. If `--file` is provided anything on stdin is ignored.
     3. Only when there are no command arguments and no '--file' option is found, any lines on stdin are treated as commands to
         execute.
-- There is no '--pipe'. Stdin is not inherited from the parent and any attempt by the child processes to read from the stdin
-    stream will result in the stream immediately closing.
-
-If you need any of these to be part of your parallelizing tool please check GNU Parallel or Rust Parallel.
+- Stdin is not inherited from the parent and any attempt by the child processes to read from the stdin stream will result in the stream immediately closing. But you can use pipes, redirects etc. within each thread as long as your shell provides the functionality, e.g. `parallel-sh 'ls -1 |wc -l` or `parallel-sh.exe "Get-ChildItem -Path * | Measure-Object -Line"`
 
 Most of the effects of these features can be achieved by processing the commands before passing them to `parallel-sh`.
 
 ## Options
 ```text
-parallel-sh 0.1.13
+parallel-sh 0.1.14
 Execute commands in parallel
 
-USAGE:
-    parallel-sh [FLAGS] [OPTIONS] [clijobs]...
+Usage: parallel-sh [OPTIONS] [clijobs]...
 
-FLAGS:
-        --dry-run          Perform a trial run, only print what would be done (with -vv)
-        --halt-on-error    Stop execution if an error occurs in any thread
-    -h, --help             Prints help information
-    -q, --quiet            Do not print `parallel-sh` warnings
-    -v, --verbose          Sets the level of verbosity
-    -V, --version          Prints version information
+Arguments:
+  [clijobs]...
 
-OPTIONS:
-    -f, --file <FILE>       Read commands from file (one command per line)
-    -l, --log <FILE>        Log output to file
-    -j, --jobs <THREADS>    Number of parallel executions
-    -s, --shell <SHELL>     shell to use for command execution (defaults to powershell on windows, and sh everywhere else)
-                            Note: commands are executed via <SHELL> -c "command", therefore the provided shell must
-                            support the '-c' option.
-ARGS:
-    <clijobs>...
+Options:
+  -q, --quiet           Do not print `parallel-sh` warnings
+  -n, --dry-run         Perform a trial run, only print what would be done (with -vv)
+  -v, --verbose...      Sets the level of verbosity
+  -l, --log <FILE>      Log output to file
+      --halt-on-error   Stop execution if an error occurs in any thread
+  -j, --jobs <THREADS>  Number of parallel executions
+  -s, --shell <SHELL>   Shell to use for command execution. Must support '-c' (defaults to sh)
+      --no-shell        Do not pass commands through a shell, but execute them directly
+  -f, --file <FILE>     Read commands from file (one command per line)
+  -h, --help            Print help
+  -V, --version         Print version
 ```
+
+## Note
+
+Per default commands are executed via <SHELL> -c "command", therefore the provided shell must support the '-c' option.
+
+With `--no-shell` the commands are started without passing them through a shell. This will avoid the overhead of starting a shell in each thread, but you will lose features like quotes, escaped characters, word splitting, glob patterns, variable substitution, etc.
+
+The commands inherit `parallel-sh`’s working directory.
 
 ## Preference
 
