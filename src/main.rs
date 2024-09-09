@@ -138,13 +138,6 @@ fn parse_args() -> Result<Args, lexopt::Error> {
                 println!("{} {}", env!("CARGO_BIN_NAME"), env!("CARGO_PKG_VERSION"));
                 process::exit(0);
             }
-            //Value(_) if clijobs.is_empty() => {
-            //    let jobs: Vec<OsString> = parser.values()?.map(Into::into).collect();
-            //    clijobs = jobs
-            //        .iter()
-            //        .map(|os_str| os_str.to_string_lossy().to_string())
-            //        .collect();
-            //}
             Value(value) => {
                 clijobs.push(value.string()?);
             }
