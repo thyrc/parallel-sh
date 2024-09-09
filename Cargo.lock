@@ -68,7 +68,6 @@ dependencies = [
  "log",
  "num_cpus",
  "simplelog",
- "time",
 ]
 
 [[package]]

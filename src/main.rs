@@ -18,8 +18,8 @@ use std::{
         Arc, Mutex,
     },
     thread,
+    time::{Duration, Instant},
 };
-use time::{Duration, Instant};
 
 const HELP: &str = "\
 Execute commands in parallel
@@ -346,8 +346,8 @@ fn main() {
             info!(
                 "'{}' took {}.{}s",
                 &result.job,
-                &result.duration.whole_seconds(),
-                &result.duration.whole_nanoseconds()
+                &result.duration.as_secs(),
+                &result.duration.subsec_nanos()
             );
             if result.output.status.success() {
                 print!("{}", String::from_utf8_lossy(&result.output.stdout));

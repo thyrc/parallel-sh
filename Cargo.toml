@@ -18,9 +18,6 @@ log = "0.4"
 num_cpus = "1"
 simplelog = "0.12"
 
-[dependencies.time]
-version = "0.3"
-
 [profile.release]
 opt-level = "z"
 panic = "abort"
